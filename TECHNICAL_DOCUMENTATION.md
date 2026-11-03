@@ -35,7 +35,7 @@
     - For beginners PLZ Remeber : (char = one character) , (char* = a pointer to characters (commonly a string))
       and (char** = a pointer to pointers to characters (commonly an array of strings))
     - The shell need this Because commands contain multiple parts.
-    - Important: args is not initialized in the code you provided. We'll come back to why that matters when discussing memory management.
+    - Important: args is not initialized in the code I provided. We'll come back to why that matters when discussing memory management.
 
 #### 1.2.4. 'char* initial_directory = getcwd(NULL, 0);':
     - "getcwd()" means Get Current Working Directory , It is a POSIX function , not a standard C function that obtains the absolute path 
@@ -56,12 +56,12 @@
 #### 1.2.5. 'while (1)'/INstruction':
     - This is an infinite loop , Because 1 is always true . A shell needs this because it must continuously wait for commands.
 
-#### 1.2.6. 'printf("[Kinex-Shell]>> ");':
-    - This displays the KINEX shell's prompt , The user sees this and knows that the shell is ready to receive a command.
+#### 1.2.6. 'printf("[Kinux-Shell]>> ");':
+    - This displays the Kinux shell's prompt , The user sees this and knows that the shell is ready to receive a command.
 
 #### 1.2.7. 'if (getline(&input, &input_size, stdin) == -1)':
     - getline() is a function used in C to read an entire line of text from an input stream and store it in a dynamically allocated 
-       buffer. It is useful when building our Kinex Shell because you don't know in advance how long the command entered by the user will be. getline() is a POSIX function, not a standard ISO C function. It is declared in <stdio.h> on systems that support it
+       buffer. It is useful when building our Kinux Shell because you don't know in advance how long the command entered by the user will be. getline() is a POSIX function, not a standard ISO C function. It is declared in <stdio.h> on systems that support it
     - getline() takes 3 Arguments , getline(Argument 1,Argument 2,Argument 3) lets understand each argument :
         - Argument 1 : It's Type is "char **" and the Purposr is an Address of a pointer to the buffer.
           so Why do we pass "&input" instead of "input"?  "input" is a pointer to a character , "&input" is the address of that pointer.
@@ -89,6 +89,21 @@
       It takes one string and creates an array of strings. This is called tokenization.
       That's what split_commands() does with more things than that.
       WE gonna define it like this (char** split_commands(char* input)) so the results is a char** to be as the type of args and the input is a char* as the type of "input"
+
+
+### 1.3 The built_in_commands function :
+The purpose is to determine whether the command entered by the user is a built-in command.
+For example, when the user types cd, pwd, echo, or exit, your shell needs to recognize the command and handle it.
+This function have three parameters:
+ - char** args : Array of strings containing the command and its arguments.
+ - char** env : Array of environment variables.
+ - char* initial_directory : Pointer to the directory where the shell initially started.
+ - strcmp() is a function that compare two strings , it a function imported from <strings.h> in the coming versions of this project if there is enough time I will write it my self
+ - Why not simply write: {if (args[0] == "cd")} 
+ Because in C, strings are arrays of characters, and comparing two string pointers with == compares their memory addresses, not their textual contents.
+
+
+#### 1.3.1. 'char* input = NULL;': 
 -----------------------------------------------------------------------------------------------------------------------------------------
 
 
@@ -97,5 +112,112 @@
 For this implementation, spaces, tabs, and certain other whitespace characters separate tokens.
 One limitation: this is a simple tokenizer, not a complete shell parser. It doesn't understand quotation marks, escaped spaces, pipes, or redirections yet.
 ### 2.1 The split_commands function : 
+The objective of this function is it takes one string and creates an array of strings.
+This is called tokenization.
+A token is one individual component of the command.
 #### 2.1.1. 'size_t buffer_size = MAX_INPUT_SIZE;':
     - We need buffer size Because the shell needs to allocate memory for the array that will contain the tokens.
+
+#### 2.1.2. 'char** tokens = malloc(buffer_size * sizeof(char*));':
+    - malloc() is a C function imported from <stdlib.h> It dynamically allocates a block of memory and returns a pointer to that memory ? It does NOT automatically allocate memory for the strings those pointers will eventually point to.
+    We'll allocate each string separately later.
+    - Why 'char*' inside sizeof() rather than 'char'? I did that because 'tokens' is an array of pointers to strings . I need space for 1024 pointers , not 1024 individual characters. So at this stage I allocated memory for the pointers, not yet for individual strings.
+
+#### 2.1.3. 'char* token = NULL;':
+    - The Pointer here temporarily points to the begining of ethe current token insude the original input string , It does not allocate another string. It simply points into the existing 'input' buffer.
+    - In abother way , This is a pointer to a character. Its job is to point to the beginning of the current word being extracted from the original input.'token' does not contain a copy of the word. It stores the address of the first character of that word in the original input.
+    - For more Clarification : 
+        input  = Points to the complete original command
+        token  = Temporarily points to the beginning of 1 token
+        tokens = Points to the array containing the resulting strings
+    - I initialize it to NULL , Because before the parser finds a token, it doesn't point to a valid character.
+
+#### 2.1.4. 'size_t position = 0;':
+    - This variable tells the program where to store the next token in the tokens array.
+    The variable position determines which index is currently being filled. After storing the first token I need to increase the position .
+
+#### 2.1.5. 'size_t token_length = 0;':
+    - This variable counts the number of characters in the current token. we do need it cuz I must know how much memory to allocate for each individual token.
+
+#### 2.1.6. 'if (!tokens) {perror("Malloc");exit(EXIT_FAILURE);}':
+    - Here simply we know that malloc() can fail maybe the system might not have enough available memory , and when malloc() fials it returns 'NULL'.
+    - 'if (!tokens)' <=> 'if (tokens == NULL)'
+    - the exit() terminates the entire program.
+    - "EXIT_FAILURE" is a standard macro from stdlib.h indicating unsuccessful program termination.
+
+#### 2.1.7. 'for (size_t i = 0; input[i]; i++)':
+    - This is where the actual parsing happens.
+    - We start at index 0 and continue as long as the current character is not '\0'. 'i' is the index used to navigate through the original input string.
+
+#### 2.1.8. 'while(input[i] == ...)':
+    - We need this cuz We don't want to create empty tokens for spaces. So this loop advances i until it reaches a character that isn't one of the specified whitespace characters.
+
+#### 2.1.9. 'token = &input[i];':
+    - let's say the command that we are passing is  'ls -l /home' , and suppose that 'i=3' , which means we are curently in '-' , so 
+    tpken = input[3]. input[3] gives the character '-' and the &input[3] gives the address of the character so finally token stores that adress that means 'token' points to the beginning of the word '-l'
+    - who is reading this Documentation remember that We haven't copied anything yet , 'token' is just a pointer into the original input string.
+
+#### 2.1.10. 'while(input[i] != ...)':
+    - Here this while job is to know when we have to stop the word like we passed 'ls -l /home' it has to take like the last exemple '-l' not '-l ' when the programme see a space or something stop
+    - Every time we encounter a character We increase the length of the current word. using {token_length++;}
+    -- Know we know Where the word starts: 'token' , and How many characters it contains: 'token_lengthe'
+
+#### 2.1.11. 'tokens[position] = malloc((token_length + 1) * sizeof(char));':
+This part of code , Allocate memory for the current word
+    - We do add 1 Because we need  positions for the actual characters and one additional position for the null terminator '\0'
+    - As we know before 'tokens[position]' is a 'char*' , So we are allocating memory for a string and storing the address of that allocated memory inside the corresponding pointer slot.
+
+#### 2.1.12. 'for (size_t j = 0; j < token_length; j++)':
+This part of code Copy the characters into the allocated memory
+    - let's see '/home' : 
+    we have 'token' points to input[6], the beginning of "/home"
+    'tokens[2]'points to newly allocated memory Then : 
+    tokens[2][0] = token[0];  // '/'
+    tokens[2][1] = token[1];  // 'h'
+    tokens[2][2] = token[2];  // 'o'
+    tokens[2][3] = token[3];  // 'm'
+    tokens[2][4] = token[4];  // 'e'
+    - Now '/home' exists in two places :
+    Inside 'input' and Inside the newly allocated memory referenced by 'tokens[2]'.
+
+#### 2.1.13. 'tokens[position] = NULL;':
+    - Suppose we processed: ls -l /home
+    We now have:tokens[0] = "ls"
+                tokens[1] = "-l"
+                tokens[2] = "/home"
+    But how does another function know when the array ends? We add:
+    tokens[3] = NULL; This is called a null-pointer terminator.
+    This is important because functions such as execvp() expect an array of string pointers terminated by NULL.
+
+
+### 2.2 The free_tokens function : 
+The idea is to release all the memory allocated by split_commands().
+we allocated memory in two different places:
+{char** tokens = malloc(buffer_size * sizeof(char*));}
+{tokens[position] = malloc((token_length + 1) * sizeof(char));}
+
+    - '!tokens' means the pointer is NULL We want to return only when there is nothing to free
+    - free(tokens[i]) releases the memory of each individual string.
+    - free(tokens) releases the array containing the pointers.
+    - I must release the individual strings before releasing the array because you need the array to access their addresses.
+
+
+## 3.Understanding Makefile
+A 'Makefile' is a file that tells a build tool called "make" how to compile your project.
+we do have 'main.c' , 'command_parser.c' , 'built_in_commands.c' , 'shell_config.h' , 'Makefile'
+Without a Makefile, I might compile the project manually like this : gcc main.c command_parser.c built_in_commands.c  -o Kinux
+As your project grows, this command can become longer and more complicated.
+A 'Makefile' allows me to save the compilation instructions once and execute them whenever I need. So with the 'Makefile' I can simply type "make" , And "make" reads the 'Makefile 'and executes the necessary commands.
+
+
+
+## 4.Understanding shell_config.h
+So first we know that '.h' stands for "header" and a header file generally contains declarations that tell other source files what functions, types, macros, and other elements are available.
+
+So for exemple in 'main.c' to use the split-commands() main needs to know that split-commands() exists and what its return type and parameters are. That's where the header file comes in.
+
+What does #ifndef, #define, and #endif mean? :
+These three directives are called header guards. They prevent the contents of shell_config.h from being processed repeatedly within the same .c file.
+- #ifndef SHELL_CONFIG_H : If SHELL_CONFIG_H has NOT been defined, continue processing the code.
+- #define SHELL_CONFIG_H : Define the identifier SHELL_CONFIG_H. Now the condition is no longer true if the same header is included again.
+- #endif : It marks the end of the conditional block.

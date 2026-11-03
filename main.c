@@ -1,5 +1,50 @@
 #include "shell_config.h"
 
+int built_in_commands(char** args , char** env , char* initial_directory)
+{
+    // To avoid unused parameter warning (for the version where You see this the commands using env are commented out).
+    (void) env; 
+    // To avoid unused parameter warning (for the version where You see this the commands using initial_directory are commented out).
+    (void) initial_directory;
+
+    // Check if the command is a built-in command and execute it accordingly.
+    if (strcmp(args[0], "cd") == 0)
+    {
+        // retuen command_cd(args , initial_directory);
+    } 
+    else if (strcmp(args[0], "help") == 0)
+    {
+        // return command_help();
+    } 
+    else if (strcmp(args[0], "env") == 0)
+    {
+        // return command_env(env);
+    } 
+    else if (strcmp(args[0], "setenv") == 0)
+    {
+        // return command_setenv(args , env);
+    } 
+    else if (strcmp(args[0], "unsetenv") == 0)
+    {
+        // return command_unsetenv(args , env);
+    } 
+    else if (strcmp(args[0], "which") == 0)
+    {
+        // return command_which(args , env);
+    } 
+    else if (strcmp(args[0], "exit") == 0 || strcmp(args[0], "quit") == 0)
+    {
+        exit(EXIT_SUCCESS); // Exit the shell successfully.
+    } 
+    else
+    {
+        return 1; // Not a built-in command.
+    }
+    
+    return 0;
+
+}
+
 void run_shell(char** env){
 
     char* input = NULL;
@@ -11,7 +56,7 @@ void run_shell(char** env){
 
     while (1)
     {
-        printf("[Kiniex-Shell]>> "); // The user sees this and knows that the shell is ready to receive a command.
+        printf("[Kinux-Shell]>> "); // The user sees this and knows that the shell is ready to receive a command.
 
         if (getline(&input , &input_size , stdin) == -1) // EOF , Error , Ctrl+D
         {
@@ -22,6 +67,11 @@ void run_shell(char** env){
 
         args = split_commands(input);
         
+        if (args[0])
+        {
+            built_in_commands(args , env , initial_directory);
+        }
+
     }
 
 }
