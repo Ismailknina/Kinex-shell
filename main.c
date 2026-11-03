@@ -73,6 +73,8 @@ void run_shell(char** env){
         }
 
     }
+    free_tokens(args); // Free the memory allocated for the command tokens.
+
 
 }
 

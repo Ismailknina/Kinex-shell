@@ -30,6 +30,11 @@ char** split_commands(char* input){
         }
 
         tokens[position] = malloc((token_length +1)*sizeof(char));
+        
+        if (!tokens[position]){
+                perror("Memory allocation failed");
+                free_tokens(tokens);
+                exit(EXIT_FAILURE);}
 
         // Copy the characters into the allocated memory
         for(size_t j = 0; j<token_length;j++)
@@ -41,11 +46,9 @@ char** split_commands(char* input){
         position++; // Move to the next token position
         token_length = 0; // Reset token length for the next token
 
-        tokens[position] = NULL; // Null-terminate the array of tokens
-        return tokens;
-
     }
-
+    tokens[position] = NULL; // Null-terminate the array of tokens
+    return tokens;
 }
 
 void free_tokens(char** tokens){

@@ -15,7 +15,7 @@
 // It tells the preprocessor to replace every occurrence of MAX_INPUT with 1024 before compilation. It isn't a variable and doesn't allocate memory.
 # define MAX_INPUT_SIZE 1024 
 
-// Function to split the input string into commands based on the semicolon delimiter.
+// Function to split the input string into commands based on spaces , Newlines , Carriage returns , Tabs , Bell characters.
 char** split_commands(char* input);
 // Function to free the memory allocated for the array of command strings.
 void free_tokens(char** tokens);
